@@ -1,32 +1,30 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""
-Clase (y programa principal) para un servidor de eco en UDP simple
-"""
 
 import socketserver
 import sys
 
+class SIPRegisterHandler(socketserver.DatagramRequestHandler):
 
-class EchoHandler(socketserver.DatagramRequestHandler):
-    """
-    Echo server class
-    """
-
+    resdic = {}
     def handle(self):
-        """
-        handle method of the server class
-        (all requests will be handled by this method)
-        """
-        self.wfile.write(b"Hemos recibido tu peticion")
-        print('IP cliente: ' + self.client_address[0] + '\t' + 'Puerto cliente: ' + str(self.client_address[1]))
+
+        print('IP cliente: ' + self.client_address[0] + '\t'
+         + 'Puerto cliente: ' + str(self.client_address[1]))
         for line in self.rfile:
-            print("El cliente nos manda", line.decode('utf-8'))
+            dline = line.decode('utf-8')
+            if not line:
+                continue
+            elif dline.split(' ')[0] == 'REGISTER':
+                self.resdic[dline.split(' ')[1][dline.find(':') + 1 : ]] = self.client_address[0]
+                print("El cliente nos manda:", dline)
+                self.wfile.write(b'SIP/2.0 200 OK\r\n\r\n')
+            else:
+                pass
 
 if __name__ == "__main__":
-    # Listens at localhost ('') port 6001 
-    # and calls the EchoHandler class to manage the request
-    serv = socketserver.UDPServer(('', int(sys.argv[1])), EchoHandler) 
+
+    serv = socketserver.UDPServer(('', int(sys.argv[1])), SIPRegisterHandler) 
 
     print("Lanzando servidor UDP de eco...")
     try:
