@@ -12,12 +12,14 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
         print('IP cliente: ' + self.client_address[0] + '\t'
          + 'Puerto cliente: ' + str(self.client_address[1]))
         for line in self.rfile:
-            dline = line.decode('utf-8')
+            dcline = line.decode('utf-8')
             if not line:
                 continue
-            elif dline.split(' ')[0] == 'REGISTER':
-                self.resdic[dline.split(' ')[1][dline.find(':') + 1 : ]] = self.client_address[0]
-                print("El cliente nos manda:", dline)
+            elif dcline.split(' ')[0] == 'REGISTER':
+                self.resdic[dcline.split(' ')[1]
+                [dcline.split(' ')[1].find(':') + 1 : ]] = self.client_address[0]
+                print("El cliente nos manda:", dcline)
+                print(self.resdic)
                 self.wfile.write(b'SIP/2.0 200 OK\r\n\r\n')
             else:
                 pass
