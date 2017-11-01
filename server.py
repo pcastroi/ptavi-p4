@@ -7,49 +7,65 @@ import sys
 import time
 
 class SIPRegisterHandler(socketserver.DatagramRequestHandler):
-
+    """
+    SIP Handler
+    """
     sipdic = {}
     
     def register2json(self):
+        """ 
+        Creates a json file with the dictionary inside
+        """
         json.dump(self.sipdic, open('registered.json', 'w'))
 
-
+    def json2register(self):
+        """
+        Open a json file and extract the dictionary
+        """
+        try:
+            with open('registered.json', 'r') as fich:
+                self.sipdic = json.load(fich)
+        except (FileNotFoundError, ValueError, json.decoder.JSONDecodeError):
+            pass
+            
     def handle(self):
-        print('IP cliente: ' + self.client_address[0] + '\t'
-         + 'Puerto cliente: ' + str(self.client_address[1]))
-        listdel = []
+        """
+        handle method of the server class
+        (all requests will be handled by this method)
+        if the dictionary its empty, run normally.
+        if not, call method json2register
+        """
+        if self.sipdic == {}:
+            self.json2register()
+            
         for line in self.rfile:
             decodlin = line.decode('utf-8')
-            print(decodlin)
             if not line:
                 continue
-                
             elif decodlin.split(' ')[0] == 'REGISTER':
                 sipusr = decodlin.split(' ')[1][decodlin.split(' ')[1].find(':') + 1 :] 
                 self.sipdic[sipusr] = [self.client_address[0], 0]
-                self.register2json()
 
             elif decodlin.split(' ')[0] == 'Expires:':
+                listdel = []
                 expt = float(decodlin.split(' ')[1]) + time.time()
                 self.sipdic[sipusr][1] = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(expt))
                 for user in self.sipdic:
                     if self.sipdic[user][1] <= time.strftime('%Y-%m-%d %H:%M:%S',
-                     time.gmtime(time.time())):
+                    time.gmtime(time.time())):
                         listdel.append(user)
-                        print('Tiempo expirado')
-                    else:
-                        print('Tiempo no expirado')
-                
                 for user in listdel:
                     del self.sipdic[user]
-                    print('Diccionario:', self.sipdic)
                 self.register2json()
                 self.wfile.write(b'SIP/2.0 200 OK\r\n\r\n')
-            else:
-                pass
+
+        print(self.sipdic)
    
 if __name__ == "__main__":
-
+    # Listens at localhost ('') port 6001
+    # and calls the SIPRegisterHandler class to manage the request
+    if len(sys.argv) != 2:
+        sys.exit('Usage: python3 server.py port')
     serv = socketserver.UDPServer(('', int(sys.argv[1])), SIPRegisterHandler) 
 
     print("Lanzando servidor UDP de eco...")
