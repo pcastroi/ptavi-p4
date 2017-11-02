@@ -6,14 +6,15 @@ import socketserver
 import sys
 import time
 
+
 class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     """
     SIP Handler
     """
     sipdic = {}
-    
+
     def register2json(self):
-        """ 
+        """
         Creates a json file with the dictionary inside
         """
         json.dump(self.sipdic, open('registered.json', 'w'))
@@ -27,7 +28,7 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                 self.sipdic = json.load(fich)
         except (FileNotFoundError, ValueError, json.decoder.JSONDecodeError):
             pass
-            
+
     def handle(self):
         """
         handle method of the server class
@@ -37,22 +38,26 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
         """
         if self.sipdic == {}:
             self.json2register()
-            
+
         for line in self.rfile:
-            decodlin = line.decode('utf-8')
+
+            declinsp = line.decode('utf-8').split(' ')
             if not line:
                 continue
-            elif decodlin.split(' ')[0] == 'REGISTER':
-                sipusr = decodlin.split(' ')[1][decodlin.split(' ')[1].find(':') + 1 :] 
+            elif declinsp[0] == 'REGISTER':
+                print(line.decode('utf-8'))
+                sipusr = declinsp[1][declinsp[1].find(':') + 1:]
                 self.sipdic[sipusr] = [self.client_address[0], 0]
 
-            elif decodlin.split(' ')[0] == 'Expires:':
+            elif declinsp[0] == 'Expires:':
                 listdel = []
-                expt = float(decodlin.split(' ')[1]) + time.time()
-                self.sipdic[sipusr][1] = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(expt))
+                expt = float(declinsp[1]) + time.time()
+                tnow = time.strftime('%Y-%m-%d %H:%M:%S',
+                                     time.gmtime(time.time()))
+                self.sipdic[sipusr][1] = time.strftime('%Y-%m-%d %H:%M:%S',
+                                                       time.gmtime(expt))
                 for user in self.sipdic:
-                    if self.sipdic[user][1] <= time.strftime('%Y-%m-%d %H:%M:%S',
-                    time.gmtime(time.time())):
+                    if self.sipdic[user][1] <= tnow:
                         listdel.append(user)
                 for user in listdel:
                     del self.sipdic[user]
@@ -60,13 +65,13 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                 self.wfile.write(b'SIP/2.0 200 OK\r\n\r\n')
 
         print(self.sipdic)
-   
+
 if __name__ == "__main__":
     # Listens at localhost ('') port 6001
     # and calls the SIPRegisterHandler class to manage the request
     if len(sys.argv) != 2:
         sys.exit('Usage: python3 server.py port')
-    serv = socketserver.UDPServer(('', int(sys.argv[1])), SIPRegisterHandler) 
+    serv = socketserver.UDPServer(('', int(sys.argv[1])), SIPRegisterHandler)
 
     print("Lanzando servidor UDP de eco...")
     try:
