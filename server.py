@@ -54,7 +54,7 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                 listdel = []
                 expt = float(declinsp[1]) + time.time()
                 now = time.strftime('%Y-%m-%d %H:%M:%S',
-                                     time.gmtime(time.time()))
+                                    time.gmtime(time.time()))
                 self.sipdic[sipusr][1] = time.strftime('%Y-%m-%d %H:%M:%S',
                                                        time.gmtime(expt))
                 for user in self.sipdic:
