@@ -50,14 +50,15 @@ class SIPRegisterHandler(socketserver.DatagramRequestHandler):
                 self.sipdic[sipusr] = [self.client_address[0], 0]
 
             elif declinsp[0] == 'Expires:':
+                print(line.decode('utf-8'))
                 listdel = []
                 expt = float(declinsp[1]) + time.time()
-                tnow = time.strftime('%Y-%m-%d %H:%M:%S',
+                now = time.strftime('%Y-%m-%d %H:%M:%S',
                                      time.gmtime(time.time()))
                 self.sipdic[sipusr][1] = time.strftime('%Y-%m-%d %H:%M:%S',
                                                        time.gmtime(expt))
                 for user in self.sipdic:
-                    if self.sipdic[user][1] <= tnow:
+                    if self.sipdic[user][1] <= now:
                         listdel.append(user)
                 for user in listdel:
                     del self.sipdic[user]
